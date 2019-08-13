@@ -1,0 +1,41 @@
+[
+  {
+    "customer": {
+      "address": "509 Kings Hwy, Comptche, Missouri, 4848",
+      "phone": "+1 (999) 407-2274",
+      "email": "blankenship.patrick@orbin.ca",
+      "company": "ORBIN",
+      "name": {
+        "last": "Patrick",
+        "first": "Blankenship"
+      },
+      "_id": "5730864df388f1d653e37e6f"
+    }
+  },
+  {
+    "customer": {
+      "address": "290 Lefferts Avenue, Malott, Delaware, 1575",
+      "phone": "+1 (958) 411-2876",
+      "email": "anna.glass@snips.name",
+      "company": "SNIPS",
+      "name": {
+        "last": "Glass",
+        "first": "Anna"
+      },
+      "_id": "5730864d4d8523c8baa8baf6"
+    }
+  },
+  {
+    "customer": {
+      "address": "756 Randolph Street, Omar, Rhode Island, 3310",
+      "phone": "+1 (962) 436-2519",
+      "email": "sparks.ramos@eschoir.co.uk",
+      "company": "ESCHOIR",
+      "name": {
+        "last": "Ramos",
+        "first": "Sparks"
+      },
+      "_id": "5730864e375e08523150fc04"
+    }
+  },
+]

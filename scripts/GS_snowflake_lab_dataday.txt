@@ -1,0 +1,323 @@
+-- Sample Queries
+-- Checking Performance
+
+use role securityadmin;
+
+#create roles
+Create or Replace Role anl_admin comment='Created to manage admin activities';
+Create or Replace Role anl_write comment='Created to managed dev activities';
+Create or Replace Role anl_read comment='Created to managed BI activities';
+
+#create users
+create or replace user admin_user password = 'adminuser' default_role = anl_admin must_change_password = false;
+create or replace user etl_user password = 'etluser' default_role = anl_write must_change_password = false;
+create or replace user read_user password = 'readuser' default_role = anl_read must_change_password = false;
+
+
+#assign roles to user
+grant role anl_Admin to user admin_user;
+grant role anl_write to user etl_user;
+grant role anl_read to user read_user; 
+grant role anl_admin to user gspc
+
+#hierarchy role setup
+ grant role anl_admin to role SYSADMIN; -- all the objects created by anl_admin can be accessed by sysadmin
+ grant role anl_write, anl_read to role anl_admin -- all roles roles up to anl_admin
+ grant role anl_read to role anl_write -- read role can access objects created by write user but not admin user
+ 
+ show grants on role anl_read
+ 
+ use role sysadmin
+ #create table
+ create database sflk_s
+ #create schema
+ create schema fact
+ create schema dim
+
+#grants on roles for db security
+grant usage,monitor,create schema   on database sflk_s to role anl_admin
+grant usage,monitor,create schema   on database sflk_s to role anl_write;
+
+use database sflk_s
+
+#warehouses
+etl_write_xs
+etl_write_s
+read_only_xs
+read_only_s
+
+#warehouse usage
+grant modify,monitor,operate,usage  on warehouse etl_write_xs to role anl_admin;
+grant modify,monitor,operate,usage  on warehouse etl_write_s to role anl_admin;
+
+#revoke privilges
+revoke modify,monitor,operate,usage  on warehouse etl_write_xs from role anl_write;
+revoke modify,monitor,operate,usage  on warehouse etl_write_s from role anl_write;
+revoke modify,monitor,operate,usage  on warehouse read_only_xs from role anl_read;
+revoke modify,monitor,operate,usage  on warehouse read_only_s from role anl_read;
+
+#grant usage only
+grant usage  on warehouse etl_write_xs to role anl_write;
+grant usage  on warehouse etl_write_s to role anl_write;
+
+grant usage  on warehouse read_only_xs to role anl_read;
+grant usage  on warehouse read_only_s to role anl_read;
+
+#schema level access
+grant all on schema sflk_s.dim to role anl_admin;
+grant all on schema sflk_s.fact to role anl_admin;
+grant all on schema sflk_s.dim to role anl_write;
+grant all on schema sflk_s.fact to role anl_write;
+grant usage on schema sflk_s.dim to role anl_read;
+grant usage on schema sflk_s.fact to role anl_read;
+
+#table level access
+grant all on all tables in schema sflk_s.dim  to role anl_admin;
+grant all on all tables in schema sflk_s.fact to role anl_admin;
+grant all on all tables in schema sflk_s.dim  to role anl_write;
+grant all on all tables in schema sflk_s.fact to role anl_write;
+grant select on all tables in schema sflk_s.dim  to role anl_read;
+grant select on all tables in schema sflk_s.fact to role anl_read;
+
+#view level access
+grant all on all views in schema sflk_s.dim  to role anl_admin;
+grant all on all views in schema sflk_s.fact to role anl_admin;
+grant all on all views in schema sflk_s.dim  to role anl_write;
+grant all on all views in schema sflk_s.fact to role anl_write;
+grant select on all views in schema sflk_s.dim  to role anl_read;
+grant select on all views in schema sflk_s.fact to role anl_read;
+
+Data Loading Steps:
+------------------
+
+Create File Format Objects 
+    -> Create Stage Objects 
+       -> Stage the Data Files 
+          -> List the Stages Data Files 
+             -> Copy Data into Target Tables 
+                -> Resolve Data Errors if any 
+ 		    -> Verify loaded data 
+		       -> Remove successfully loaded data files 
+
+
+/* Create a target relational table for the JSON data. The table is temporary, meaning it persists only for the duration
+of the user session and is not visible to other users. */
+
+use database sflk_s
+
+use schema dim
+
+create or replace table home_sales (
+  city string,
+  zip string,
+  state string,
+  type string default 'Residential',
+  sale_date timestamp_ntz,
+  price string
+  );
+
+/* Create a named file format with the file delimiter set as none and the record delimiter set as the new line character.
+
+When loading semi-structured data, e.g. JSON, you should set CSV as the file format type (default value). You could use the
+JSON file format, but any error in the transformation would stop the COPY operation, even if you set the ON_ERROR option to
+continue or skip the file. */
+
+create or replace file format sf_tut_csv_format
+  field_delimiter = none
+  record_delimiter = '\\n';
+
+/* Create a  internal stage that references the file format object.*/
+
+create or replace  stage sf_tut_stage
+  file_format = sf_tut_csv_format;
+  
+#Connect to snowsql for data loading
+# Snowsql connect string
+
+snowsql -a aa93657.us-east-1 -u etl_user -r anl_write -w etl_write_xs -d sflk_s -s dim	
+
+/* Stage the data file.
+
+Note that the example PUT statement references the macOS or Linux location of the data file.
+If you are using Windows, execute the following statement instead:
+PUT %TEMP%/json_load_ex.json @sf_tut_stage; */
+
+put file://c:\temp\json_load_ex.json @sf_tut_stage auto_compress=true;
+
+put file:///Users/gops/Documents/sflk/json_load_ex.json @sf_tut_stage;
+
+/* Load the JSON data into the relational table.
+
+A SELECT query in the COPY statement identifies a numbered set of columns in the data files you are loading from. Note that all JSON data is stored in a single column ($1). */
+show stages;
+
+list @sf_tut_stage;
+#remove @sf_tut_stage;
+
+copy into home_sales(city, state, zip, sale_date, price)
+   from (select substr(parse_json($1):location.state_city,4), substr(parse_json($1):location.state_city,1,2), parse_json($1):location.zip, to_timestamp_ntz(parse_json($1):sale_date), parse_json($1):price
+   from @sf_tut_stage/json_load_ex.json.gz t)
+   on_error = 'continue';
+
+-- Snowflake remembers metadata of the files loaded previously. So, if you try to load a file with same name again or same file again, based on the file name, the copy will ignore that.
+-- At times, we may have to reload the files
+-- On such scenario, we can skip this option by setting force = true
+-- If you want to purge the files copied into table, after every load, you can set, purge = true
+
+-- Query the relational table
+select * from home_sales;
+
+----------
+----- Parquet Files
+/* Create a target relational table for the Parquet data. The table is temporary, meaning it persists only for the duration
+of the user session and is not visible to other users. */
+
+create or replace table cities (
+  continent varchar default null,
+  country varchar default null,
+  city variant default null
+);
+
+-- Create a file format object that specifies the Parquet file format type. Accepts the default values for other options.
+create or replace file format sf_tut_parquet_format
+  type = 'parquet';
+
+/* Create a temporary internal stage that references the file format object.
+
+  Similar to temporary tables, temporary stages are automatically dropped at the end of the session. */
+
+create or replace stage sf_tut_stage
+  file_format = sf_tut_parquet_format;
+
+/* Stage the data file.
+
+Note that the example PUT statement references the macOS or Linux location of the data file.
+If you are using Windows, execute the following statement instead:
+put %TEMP%/cities.parquet @sf_tut_stage; */
+
+put file:///Users/gops/Documents/sflk/cities.parquet @sf_tut_stage;
+
+/* Load the Parquet data into the relational table.
+
+A SELECT query in the COPY statement identifies a numbered set of columns in the data files you are loading from. Note that all Parquet data is stored in a single column ($1).
+
+Cast element values to the target column data type. */
+
+copy into cities
+  from (select
+  $1:continent::varchar,
+  $1:country:name::varchar,
+  $1:country:city.bag::variant
+  from @sf_tut_stage/cities.parquet);
+
+-- Query the relational table
+select * from cities;
+
+---------
+
+-- Load csv files
+create or replace table mycsvtable (
+  id integer,
+  last_name string,
+  first_name string,
+  company string,
+  email string,
+  workphone string,
+  cellphone string,
+  streetaddress string,
+  city string,
+  postalcode string);
+
+-- Create file format
+create or replace file format mycsvformat
+  type = 'CSV'
+  field_delimiter = '|'
+  skip_header = 1;
+
+-- Create Stage
+create or replace stage my_csv_stage
+  file_format = mycsvformat;
+
+-- Put files
+put file:///Users/gops/Documents/sflk/csv/contacts*.csv @my_csv_stage auto_compress=true;
+
+-- List files in stage
+list @my_csv_stage;
+
+-- Load stage files
+copy into mycsvtable
+  from @my_csv_stage/contacts1.csv.gz
+  file_format = (format_name = mycsvformat)
+  on_error = 'skip_file';
+
+-- Check for errors
+create or replace table save_copy_errors as select * from table(validate(mycsvtable, job_id=>'<query_id>'));
+
+
+select * from save_copy_errors;
+
+-- Check row 1&5 for errors and fix the issue in file 3
+
+-- Put file again
+put file:///Users/gops/Documents/sflk/csv/contacts3.csv @my_csv_stage auto_compress=true;
+
+-- Reload data into file
+copy into mycsvtable
+  from @my_csv_stage/contacts3.csv.gz
+  file_format = (format_name = mycsvformat)
+  on_error = 'skip_file';
+
+-- Check the loaded data
+select * from mycsvtable;
+
+-- Remove successfully loaded file from stage
+remove @my_csv_stage pattern='.*.csv.gz';
+
+
+-- Cloning Tables
+Create or replace mycsvtable_copy clone mycsvtable;
+
+-- Time Travel
+create table mytable(col1 number, col2 date) data_retention_time_in_days=90;
+
+alter table mytable set data_retention_time_in_days=30;
+
+-- Querying historical table using time travel
+
+-- Create table mycsv_test with data retention time as 10 days
+create or replace table mycsv_test (
+  id integer,
+  last_name string,
+  first_name string,
+  company string,
+  email string,
+  workphone string,
+  cellphone string,
+  streetaddress string,
+  city string,
+  postalcode string) data_retention_time_in_days=90;
+-- Insert records from mycsvtable into mycsv_test
+-- Delete a record from mycsv_tets
+-- Wait for a minute
+-- Now you can test time travel by issuing query below
+	
+select * from mycsv_test at(offset => -60*1); -- Checks from copy back from 1 minute
+
+-- Time travel can be done at timestamp, minute, hour level and even before execution of a particular statement if you have the statement id
+
+-- We can even clone a table using time travel
+
+-- Clone one of the demo tables and let us cluster that and check the performance before and after clustering
+-- Cluster by columns
+create or replace table t1 (c1 date, c2 string, c3 number) cluster by (c1, c2);
+
+show tables like 't1';
+
+--Change the clustering columns
+alter table t1 cluster by (c1, c3);
+
+show tables like 't1';
+
+
+-- Cluster by expression
+create or replace table t2 (c1 timestamp, c2 string, c3 number) cluster by (to_date(c1), substring(c2, 0, 10));
