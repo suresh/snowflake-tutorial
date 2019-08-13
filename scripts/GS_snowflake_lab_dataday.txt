@@ -21,21 +21,21 @@ grant role anl_read to user read_user;
 grant role anl_admin to user gspc
 
 #hierarchy role setup
- grant role anl_admin to role SYSADMIN; -- all the objects created by anl_admin can be accessed by sysadmin
- grant role anl_write, anl_read to role anl_admin -- all roles roles up to anl_admin
- grant role anl_read to role anl_write -- read role can access objects created by write user but not admin user
- 
- show grants on role anl_read
- 
- use role sysadmin
- #create table
- create database sflk_s
- #create schema
- create schema fact
- create schema dim
+grant role anl_admin to role SYSADMIN; -- all the objects created by anl_admin can be accessed by sysadmin
+grant role anl_write, anl_read to role anl_admin -- all roles roles up to anl_admin
+grant role anl_read to role anl_write -- read role can access objects created by write user but not admin user
+
+show grants on role anl_read
+
+use role sysadmin
+#create table
+create database sflk_s
+#create schema
+create schema fact
+create schema dim
 
 #grants on roles for db security
-grant usage,monitor,create schema   on database sflk_s to role anl_admin
+grant usage,monitor,create schema   on database sflk_s to role anl_admin;
 grant usage,monitor,create schema   on database sflk_s to role anl_write;
 
 use database sflk_s
