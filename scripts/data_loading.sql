@@ -31,7 +31,7 @@ list @sf_tut_stage;
 -- copy data into home_sales table
 copy into home_sales(city, state, zip, sale_date, price)
    from (select substr(parse_json($1):location.state_city,4), substr(parse_json($1):location.state_city,1,2), parse_json($1):location.zip, to_timestamp_ntz(parse_json($1):sale_date), parse_json($1):price
-   from @sf_tut_stage/sf_tut_stage/sales.json.gz t)
+   from @sf_tut_stage/sales.json.gz t)
    on_error = 'continue';
 
 -- check relational table
