@@ -95,7 +95,9 @@ For more information on this dataset, refer to [Sample Data: TPC-H](https://docs
 
 1. What is the difference between securityadmin and sysadmin roles. Why do we get a sysadmin default.
 
-* ACCOUNTADMIN (aka Account Administrator) - Role that encapsulates the SYSADMIN and SECURITYADMIN system-defined roles. It is the top-level role in the system and should be granted only to a limited/controlled number of users in your account.
+* ACCOUNTADMIN (aka Account Administrator) 
+   - Role that encapsulates the SYSADMIN and SECURITYADMIN system-defined roles. It is the top-level role in the system and should be granted only to a limited/controlled number of users in your account.
+
 * SECURITYADMIN (aka Security Administrator)
    - Role that can create, monitor, and manage users and roles. More specifically, this role is used to:
    - Create users and roles in your account (and grant those privileges to other roles).
