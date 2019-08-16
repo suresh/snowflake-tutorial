@@ -24,15 +24,16 @@ select * from trips_raw;
 
 
 -- create CSV file format
-create or replace file format sf_tut_csv_format
+create or replace file format sf_tut_trips_csv_format
   type = 'CSV'
   field_delimiter = ','
   skip_header=1;
 
 //drop stage sf_tut_trip_stage;
 -- create staging area
-create or replace stage sf_tut_trip_stage
-    file_format = sf_tut_csv_format
-    url = 's3://tripdata';
+create or replace stage sf_tut_trips_stage
+    file_format = sf_tut_trips_csv_format;
     
-list @sf_tut_trip_stage;
+list @sf_tut_trips_stage;
+
+-- run python file load_csv for getting the file to internal stage
