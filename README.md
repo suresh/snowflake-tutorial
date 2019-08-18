@@ -1,4 +1,5 @@
 # Snowflake Tutorial
+
 In this tutorial, we would be going through the process of setting Snowflake with sample warehouse. Next, we would be loading a data file onto this warehouse. Last, we would be running sample queries on this warehouse.
 
 ## Create Snowflake user profiles
@@ -13,11 +14,13 @@ Snowflake uses roles to control the objects (virtual warehouses, databases, tabl
 You can read more from [documentation](https://docs.snowflake.net/manuals/user-guide/admin-user-management.html#user-roles).
 
 ### Sample script for creating users & roles
+
 To help with this workshop, here is the script for [creating user profiles](scripts/user_profiles.sql)
 
 ## Data Loading Steps
 
 Here is the process for loading external data files (CSV, JSON or Parquet):
+
 * Create File Format Objects 
 * Create Stage Objects 
 * Stage the Data Files 
@@ -28,14 +31,17 @@ Here is the process for loading external data files (CSV, JSON or Parquet):
 * Remove successfully loaded data files 
 
 ### Sample script for creating staging area & data loading
+
 Here is the script for [loading data into Snowflake](scripts/data_loading.sql). Please execute the script up to creation of staging area.
 
-
 Then we need to put the json data file using either snowsql cli tool as: 
+
 ```bash
 snowsql -a wg30470.us-east-1 -u etl_user -r anl_write -w etl_write_xs -d sflk_s -s dim	
 ```
+
 Or, we can use a [python script](load_utils/load_json.py) to load this json file onto staging area.
+
 ```bash
 load_utils/load_json.py suresh of96327.us-east-1 etl_write_xs sflk_s dim
 ```
@@ -67,9 +73,11 @@ We would be using sample database TPC-H bundled with Snowflake for this section.
 Now let's do some BI on the sample data. 
 
 ### Q1: Pricing Summary Report Query
+
 This query reports the amount of business that was billed, shipped, and returned.
 
 ### Business Question
+
 The Pricing Summary Report Query provides a summary pricing report for all line items shipped as of a given date. The date is within 60-120 days of the greatest ship date contained in the database.
 
 Here is the query,
@@ -123,7 +131,6 @@ For more information on this dataset, refer to [Sample Data: TPC-H](https://docs
 * PUBLIC
 	- Pseudo-role that is automatically granted to every user and every role in your account. The PUBLIC role can own securable objects, just like any other role; however, the objects owned by the role are, by definition, available to every other user and role in your account.
 	- This role is typically used in cases where explicit access control is not needed and all users are viewed as equal with regard to their access rights.
-
 
 ## Reference
 
