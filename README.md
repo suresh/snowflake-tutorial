@@ -48,7 +48,10 @@ load_utils/load_json.py suresh of96327.us-east-1 etl_write_xs sflk_s dim
 
 After loading the file to staging area continue with `COPY INTO` command and see the results of the relational table. In the example above, the data files are loaded onto internal staging area of Snowflake before being copied into the final table.
 
-We could also directly use external staging area in Snowflake. Now let’s look at an example for utilizing a S3 bucket with data.
+We could also directly use external staging area in Snowflake. 
+![External S3 Store](https://docs.snowflake.net/manuals/_images/data-loading-s3.png)
+
+Now let’s look at an example for utilizing a S3 bucket with data.
 
 ```sql
 create or replace file format sf_tut_csv_format
